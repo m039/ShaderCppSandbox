@@ -4,9 +4,10 @@ project(NoiseSahderSandbox VERSION 0.1.0 LANGUAGES C CXX)
 include(CTest)
 enable_testing()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
-add_executable(NoiseSahderSandbox source/main.cpp)
+FILE(GLOB Sources source/*.cpp)
+add_executable(NoiseSahderSandbox ${Sources})
 
 find_package(glfw3 CONFIG REQUIRED)
 target_link_libraries(NoiseSahderSandbox PRIVATE glfw)
