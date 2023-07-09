@@ -18,6 +18,9 @@ target_link_libraries(NoiseSahderSandbox PRIVATE glbinding::glbinding glbinding:
 find_package(efsw CONFIG REQUIRED)
 target_link_libraries(NoiseSahderSandbox PRIVATE efsw::efsw)
 
+find_package(imgui CONFIG REQUIRED)
+target_link_libraries(NoiseSahderSandbox PRIVATE imgui::imgui)
+
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
