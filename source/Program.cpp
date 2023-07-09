@@ -2,15 +2,49 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <functional>
+#include <thread>
 
 #include "Program.hpp"
 #include "FileUtils.hpp"
 #include "linmath.h"
 
+class ShaderWatcher : public efsw::FileWatchListener
+{
+public:
+    ShaderWatcher(std::function<void(void)> callback)
+    {
+        _callback = callback;
+    }
+
+    void handleFileAction(efsw::WatchID watchid,
+                          const std::string &dir,
+                          const std::string &filename,
+                          efsw::Action action,
+                          std::string oldFilename) override
+    {
+        switch (action)
+        {
+        case efsw::Actions::Modified:
+            _callback();
+            break;
+        default:
+            break;
+        }
+    }
+
+private:
+    std::function<void(void)> _callback;
+};
+
+static std::filesystem::path VertexShaderPath = "../shaders/SolidColor.vs";
+
+static std::filesystem::path FragmentShaderPath = "../shaders/SolidColor.fs";
+
 static const struct
 {
     float x, y;
-} vertices[6] =
+} Vertices[6] =
     {
         {-0.5f, -0.5f},
         {-0.5f, 0.5f},
@@ -30,6 +64,19 @@ void PrintGLErrors()
 
 Program::Program()
 {
+    _fileWatcher = std::unique_ptr<efsw::FileWatcher>(
+        new efsw::FileWatcher());
+    _watcher = new ShaderWatcher([=]()
+                                 { _commands.push([=]()
+                                                  { CreateShaders(); }); });
+
+    _fileWatcher->addWatch(VertexShaderPath.parent_path().c_str(), _watcher, true);
+    _fileWatcher->watch();
+}
+
+Program::~Program()
+{
+    delete _watcher;
 }
 
 void Program::Init()
@@ -37,17 +84,26 @@ void Program::Init()
     // Vertex buffer.
     gl::glGenBuffers(1, &_vertexBuffer);
     gl::glBindBuffer(gl::GL_ARRAY_BUFFER, _vertexBuffer);
-    gl::glBufferData(gl::GL_ARRAY_BUFFER, sizeof(vertices), vertices, gl::GL_STATIC_DRAW);
+    gl::glBufferData(gl::GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, gl::GL_STATIC_DRAW);
 
-    // Shaders.
-    std::filesystem::path vertexShaderPath = "../shaders/SolidColor.vs";
-    std::filesystem::path fragmentShaderPath = "../shaders/SolidColor.fs";
+    CreateShaders();
+
+    PrintGLErrors();
+}
+
+void Program::CreateShaders()
+{
+    if (_program)
+    {
+        gl::glDeleteProgram(_program);
+        _program = 0;
+    }
 
     // Vertex shader.
-    _vertexShader = CreateShader(gl::GL_VERTEX_SHADER, vertexShaderPath);
+    _vertexShader = CreateShader(gl::GL_VERTEX_SHADER, VertexShaderPath);
 
     // Fragment shader.
-    _fragmentShader = CreateShader(gl::GL_FRAGMENT_SHADER, fragmentShaderPath);
+    _fragmentShader = CreateShader(gl::GL_FRAGMENT_SHADER, FragmentShaderPath);
 
     if (_fragmentShader && _vertexShader)
     {
@@ -55,20 +111,21 @@ void Program::Init()
         gl::glAttachShader(_program, _vertexShader);
         gl::glAttachShader(_program, _fragmentShader);
         gl::glLinkProgram(_program);
+
+        gl::glDeleteShader(_vertexShader);
+        gl::glDeleteShader(_fragmentShader);
+
+        _mvpLocation = gl::glGetUniformLocation(_program, "MVP");
+        _vposLocation = gl::glGetAttribLocation(_program, "vPos");
+
+        gl::glEnableVertexAttribArray(_vposLocation);
+        gl::glVertexAttribPointer(_vposLocation, 2, gl::GL_FLOAT, gl::GL_FALSE,
+                                  sizeof(Vertices[0]), (void *)0);
     }
     else
     {
         _program = 0;
     }
-
-    _mvpLocation = gl::glGetUniformLocation(_program, "MVP");
-    _vposLocation = gl::glGetAttribLocation(_program, "vPos");
-
-    gl::glEnableVertexAttribArray(_vposLocation);
-    gl::glVertexAttribPointer(_vposLocation, 2, gl::GL_FLOAT, gl::GL_FALSE,
-                              sizeof(vertices[0]), (void *)0);
-
-    PrintGLErrors();
 }
 
 gl::GLuint Program::CreateShader(gl::GLenum type, std::filesystem::path shaderPath)
@@ -110,6 +167,12 @@ gl::GLuint Program::CreateShader(gl::GLenum type, std::filesystem::path shaderPa
 
 void Program::Draw(int width, int height, float time)
 {
+    while (!_commands.empty())
+    {
+        _commands.front()();
+        _commands.pop();
+    }
+
     mat4x4 m, p, mvp;
 
     mat4x4_identity(m);
