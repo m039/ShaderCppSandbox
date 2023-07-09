@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
         gl::glViewport(0, 0, width, height);
         gl::glClear(gl::GL_COLOR_BUFFER_BIT);
 
-        program->Draw(width, height, (float)glfwGetTime());
+        program->Draw((float)glfwGetTime());
 
         glfwSwapBuffers(window);
         glfwPollEvents();

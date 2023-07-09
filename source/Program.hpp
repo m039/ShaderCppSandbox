@@ -14,12 +14,12 @@ public:
 
     void Init();
 
-    void Draw(int width, int height, float time);
+    void Draw(float time);
 
 private:
-    gl::GLuint _vertexBuffer, _vertexShader, _fragmentShader, _program;
+    gl::GLuint _vertexBuffer, _vertexShader, _fragmentShader, _program = 0;
 
-    gl::GLint _mvpLocation, _vposLocation;
+    gl::GLint _mvpLocation, _vposLocation, _timeLocation;
 
     gl::GLuint CreateShader(gl::GLenum type, std::filesystem::path path);
 

@@ -87,8 +87,6 @@ void Program::Init()
     gl::glBufferData(gl::GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, gl::GL_STATIC_DRAW);
 
     CreateShaders();
-
-    PrintGLErrors();
 }
 
 void Program::CreateShaders()
@@ -117,6 +115,7 @@ void Program::CreateShaders()
 
         _mvpLocation = gl::glGetUniformLocation(_program, "MVP");
         _vposLocation = gl::glGetAttribLocation(_program, "vPos");
+        _timeLocation = gl::glGetUniformLocation(_program, "TIME");
 
         gl::glEnableVertexAttribArray(_vposLocation);
         gl::glVertexAttribPointer(_vposLocation, 2, gl::GL_FLOAT, gl::GL_FALSE,
@@ -140,11 +139,13 @@ gl::GLuint Program::CreateShader(gl::GLenum type, std::filesystem::path shaderPa
     {
         auto shader = gl::glCreateShader(type);
         const char *text = shaderText.c_str();
-        gl::glShaderSource(shader, 1, &text, NULL);
+        const int length = shaderText.length();
+        gl::glShaderSource(shader, 1, &text, &length);
         gl::glCompileShader(shader);
 
         gl::GLint isCompiled = 0;
         gl::glGetShaderiv(shader, gl::GL_COMPILE_STATUS, &isCompiled);
+
         if (!isCompiled)
         {
             gl::GLint maxLength = 0;
@@ -165,7 +166,7 @@ gl::GLuint Program::CreateShader(gl::GLenum type, std::filesystem::path shaderPa
     }
 }
 
-void Program::Draw(int width, int height, float time)
+void Program::Draw(float time)
 {
     while (!_commands.empty())
     {
@@ -182,6 +183,7 @@ void Program::Draw(int width, int height, float time)
     if (_program)
     {
         gl::glUseProgram(_program);
+        gl::glUniform1f(_timeLocation, time);
         gl::glUniformMatrix4fv(_mvpLocation, 1, gl::GL_FALSE, (const gl::GLfloat *)mvp);
         gl::glDrawArrays(gl::GL_TRIANGLES, 0, 6);
     }
