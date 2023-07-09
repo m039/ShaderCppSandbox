@@ -2,6 +2,7 @@
 #define _PROGRAM_
 
 #include <glbinding/gl/gl.h>
+#include <filesystem>
 
 class Program {
 public:
@@ -14,7 +15,9 @@ public:
 private:
     gl::GLuint _vertexBuffer, _vertexShader, _fragmentShader, _program;
 
-    gl::GLint _mvpLocation, _vposLocation, _vcolLocation;
+    gl::GLint _mvpLocation, _vposLocation;
+
+    gl::GLuint CreateShader(gl::GLenum type, std::filesystem::path path);
 };
 
 #endif

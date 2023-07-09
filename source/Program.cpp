@@ -1,23 +1,23 @@
-#include <filesystem>
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <vector>
 
 #include "Program.hpp"
 #include "FileUtils.hpp"
 #include "linmath.h"
 
-namespace fs = std::filesystem;
-
 static const struct
 {
     float x, y;
-    float r, g, b;
-} vertices[3] =
+} vertices[6] =
     {
-        {-0.6f, -0.4f, 1.f, 0.f, 0.f},
-        {0.6f, -0.4f, 0.f, 1.f, 0.f},
-        {0.f, 0.6f, 0.f, 0.f, 1.f}};
+        {-0.5f, -0.5f},
+        {-0.5f, 0.5f},
+        {0.5f, 0.5f},
+        {-0.5f, -0.5f},
+        {0.5f, -0.5f},
+        {0.5f, 0.5f}};
 
 void PrintGLErrors()
 {
@@ -40,74 +40,88 @@ void Program::Init()
     gl::glBufferData(gl::GL_ARRAY_BUFFER, sizeof(vertices), vertices, gl::GL_STATIC_DRAW);
 
     // Shaders.
-    fs::path vertexShaderPath = "../shaders/SolidColor.vs";
-    fs::path fragmentShaderPath = "../shaders/SolidColor.fs";
+    std::filesystem::path vertexShaderPath = "../shaders/SolidColor.vs";
+    std::filesystem::path fragmentShaderPath = "../shaders/SolidColor.fs";
 
     // Vertex shader.
-    auto vertexShaderText = ReadFileAsString(vertexShaderPath);
-    if (vertexShaderText.length() <= 0)
-    {
-        std::cerr << "Can't find the vertex shader's code." << std::endl;
-    }
-    else
-    {
-        _vertexShader = gl::glCreateShader(gl::GL_VERTEX_SHADER);
-        const char *text1 = vertexShaderText.c_str();
-        gl::glShaderSource(_vertexShader, 1, &text1, NULL);
-        gl::glCompileShader(_vertexShader);
-    }
+    _vertexShader = CreateShader(gl::GL_VERTEX_SHADER, vertexShaderPath);
 
     // Fragment shader.
-    auto fragmentShaderText = ReadFileAsString(fragmentShaderPath);
-    if (fragmentShaderText.length() <= 0)
+    _fragmentShader = CreateShader(gl::GL_FRAGMENT_SHADER, fragmentShaderPath);
+
+    if (_fragmentShader && _vertexShader)
     {
-        std::cerr << "Can't find the fragment shader's code." << std::endl;
+        _program = gl::glCreateProgram();
+        gl::glAttachShader(_program, _vertexShader);
+        gl::glAttachShader(_program, _fragmentShader);
+        gl::glLinkProgram(_program);
     }
     else
     {
-        _fragmentShader = gl::glCreateShader(gl::GL_FRAGMENT_SHADER);
-        const char *text2 = fragmentShaderText.c_str();
-        gl::glShaderSource(_fragmentShader, 1, &text2, NULL);
-        gl::glCompileShader(_fragmentShader);
+        _program = 0;
     }
-
-    _program = gl::glCreateProgram();
-    gl::glAttachShader(_program, _vertexShader);
-    gl::glAttachShader(_program, _fragmentShader);
-    gl::glLinkProgram(_program);
 
     _mvpLocation = gl::glGetUniformLocation(_program, "MVP");
     _vposLocation = gl::glGetAttribLocation(_program, "vPos");
-    _vcolLocation = gl::glGetAttribLocation(_program, "vCol");
 
     gl::glEnableVertexAttribArray(_vposLocation);
     gl::glVertexAttribPointer(_vposLocation, 2, gl::GL_FLOAT, gl::GL_FALSE,
                               sizeof(vertices[0]), (void *)0);
 
-    gl::glEnableVertexAttribArray(_vcolLocation);
-    gl::glVertexAttribPointer(_vcolLocation, 3, gl::GL_FLOAT, gl::GL_FALSE,
-                              sizeof(vertices[0]), (void *)(sizeof(float) * 2));
-
     PrintGLErrors();
+}
+
+gl::GLuint Program::CreateShader(gl::GLenum type, std::filesystem::path shaderPath)
+{
+    auto shaderText = ReadFileAsString(shaderPath);
+    if (shaderText.length() <= 0)
+    {
+        std::cerr << "Can't find the shader's code for " << shaderPath.c_str() << "." << std::endl;
+        return 0;
+    }
+    else
+    {
+        auto shader = gl::glCreateShader(type);
+        const char *text = shaderText.c_str();
+        gl::glShaderSource(shader, 1, &text, NULL);
+        gl::glCompileShader(shader);
+
+        gl::GLint isCompiled = 0;
+        gl::glGetShaderiv(shader, gl::GL_COMPILE_STATUS, &isCompiled);
+        if (!isCompiled)
+        {
+            gl::GLint maxLength = 0;
+            gl::glGetShaderiv(shader, gl::GL_INFO_LOG_LENGTH, &maxLength);
+
+            std::vector<gl::GLchar> errorLog(maxLength);
+            gl::glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
+
+            std::cerr << "Shader compilation error in the file " << shaderPath.filename() << std::endl;
+            std::cerr << "  " << &errorLog[0] << std::endl;
+
+            gl::glDeleteShader(shader);
+
+            return 0;
+        }
+
+        return shader;
+    }
 }
 
 void Program::Draw(int width, int height, float time)
 {
-    auto ratio = width / (float)height;
-
-    gl::glViewport(0, 0, width, height);
-    gl::glClear(gl::GL_COLOR_BUFFER_BIT);
-
     mat4x4 m, p, mvp;
 
     mat4x4_identity(m);
-    // mat4x4_rotate_Z(m, m, time);
-    mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+    mat4x4_ortho(p, -0.5f, 0.5f, -0.5f, 0.5f, 1.f, -1.f);
     mat4x4_mul(mvp, p, m);
 
-    gl::glUseProgram(_program);
-    gl::glUniformMatrix4fv(_mvpLocation, 1, gl::GL_FALSE, (const gl::GLfloat *)mvp);
-    gl::glDrawArrays(gl::GL_TRIANGLES, 0, 3);
+    if (_program)
+    {
+        gl::glUseProgram(_program);
+        gl::glUniformMatrix4fv(_mvpLocation, 1, gl::GL_FALSE, (const gl::GLfloat *)mvp);
+        gl::glDrawArrays(gl::GL_TRIANGLES, 0, 6);
+    }
 
     PrintGLErrors();
 }

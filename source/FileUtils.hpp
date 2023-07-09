@@ -4,6 +4,6 @@
 #include <filesystem>
 #include <string>
 
-extern std::string ReadFileAsString(std::filesystem::path path);
+std::string ReadFileAsString(std::filesystem::path path);
 
 #endif

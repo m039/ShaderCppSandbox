@@ -33,13 +33,14 @@ int main(int argc, char *argv[])
 
     program->Init();
 
-    gl::glClearColor(0, 0, 0, 1);
-
     while (!glfwWindowShouldClose(window))
     {
         int width, height;
 
         glfwGetFramebufferSize(window, &width, &height);
+
+        gl::glViewport(0, 0, width, height);
+        gl::glClear(gl::GL_COLOR_BUFFER_BIT);
 
         program->Draw(width, height, (float)glfwGetTime());
 
