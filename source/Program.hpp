@@ -21,7 +21,7 @@ public:
     void OnGUI();
 
 private:
-    gl::GLuint _vertexShader, _fragmentShader, _program = 0;
+    gl::GLuint _vertexBuffer, _vertexShader, _fragmentShader, _program = 0;
 
     gl::GLint _mvpLocation, _vposLocation, _timeLocation;
 

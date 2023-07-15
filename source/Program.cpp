@@ -41,7 +41,7 @@ private:
 
 static std::filesystem::path ShadersDictory = "../shaders/";
 
-static const char* SelectedShadeNameFile = "NoiseShaderSandbox.settings";
+static const char *SelectedShadeNameFile = "NoiseShaderSandbox.settings";
 
 static const struct
 {
@@ -72,7 +72,7 @@ Program::Program()
                                  { _commands.push([=]()
                                                   { CreateShaders(this->_selectedShader); }); });
 
-    _fileWatcher->addWatch(ShadersDictory.c_str(), _watcher, true);
+    _fileWatcher->addWatch(ShadersDictory.string(), _watcher, true);
     _fileWatcher->watch();
 }
 
@@ -83,6 +83,8 @@ Program::~Program()
 
 void Program::Init()
 {
+    gl::glGenBuffers(1, &_vertexBuffer);
+
     FindShaders();
     CreateShaders(_selectedShader);
 }
@@ -94,26 +96,31 @@ void Program::OnGUI()
 
 void Program::FindShaders()
 {
-    for (const auto& entry: std::filesystem::directory_iterator(ShadersDictory)) {
+    for (const auto &entry : std::filesystem::directory_iterator(ShadersDictory))
+    {
         const auto filename = entry.path().filename().string();
         const auto trimmedName = filename.substr(0, filename.find("."));
 
-        if (std::find(_shadersFound.begin(), _shadersFound.end(), trimmedName) == _shadersFound.end()) {
+        if (std::find(_shadersFound.begin(), _shadersFound.end(), trimmedName) == _shadersFound.end())
+        {
             _shadersFound.push_back(trimmedName);
         }
     }
 
     _selectedShader = LoadSelectedShaderName();
-    if (_selectedShader.length() <= 0) {
+    if (_selectedShader.length() <= 0)
+    {
         _selectedShader = "SolidColor";
     }
 }
 
-std::string Program::LoadSelectedShaderName() {
+std::string Program::LoadSelectedShaderName()
+{
     return ReadFileAsString(SelectedShadeNameFile);
 }
 
-void Program::SaveSelectedShaderName(const std::string& selectedShaderName) {
+void Program::SaveSelectedShaderName(const std::string &selectedShaderName)
+{
     std::ofstream out(SelectedShadeNameFile);
     out << selectedShaderName;
     out.close();
@@ -125,7 +132,7 @@ void Program::PopulateMainMenuBar()
     {
         if (ImGui::BeginMenu("Shaders"))
         {
-            for (const auto& shaderName: _shadersFound)
+            for (const auto &shaderName : _shadersFound)
             {
                 if (ImGui::MenuItem(shaderName.c_str()))
                 {
@@ -149,11 +156,11 @@ void Program::CreateShaders(std::string &shaderName)
     }
 
     // Vertex shader.
-    std::filesystem::path vertexShaderPath = ShadersDictory.c_str() + (shaderName + ".vs");
+    std::filesystem::path vertexShaderPath = ShadersDictory.string() + (shaderName + ".vs");
     _vertexShader = CreateShader(gl::GL_VERTEX_SHADER, vertexShaderPath);
 
     // Fragment shader.
-    std::filesystem::path fragmentShaderPath = ShadersDictory.c_str() + (shaderName + ".fs");
+    std::filesystem::path fragmentShaderPath = ShadersDictory.string() + (shaderName + ".fs");
     _fragmentShader = CreateShader(gl::GL_FRAGMENT_SHADER, fragmentShaderPath);
 
     if (_fragmentShader && _vertexShader)
@@ -169,10 +176,6 @@ void Program::CreateShaders(std::string &shaderName)
         _mvpLocation = gl::glGetUniformLocation(_program, "MVP");
         _vposLocation = gl::glGetAttribLocation(_program, "vPos");
         _timeLocation = gl::glGetUniformLocation(_program, "TIME");
-
-        gl::glEnableVertexAttribArray(_vposLocation);
-        gl::glVertexAttribPointer(_vposLocation, 2, gl::GL_FLOAT, gl::GL_FALSE,
-                                  sizeof(Vertices[0]), (void *)Vertices);
     }
     else
     {
@@ -235,10 +238,19 @@ void Program::Draw(float time)
 
     if (_program)
     {
+        gl::glBindBuffer(gl::GL_ARRAY_BUFFER, _vertexBuffer);
+        gl::glBufferData(gl::GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, gl::GL_STATIC_DRAW);
+
+        gl::glEnableVertexAttribArray(_vposLocation);
+        gl::glVertexAttribPointer(_vposLocation, 2, gl::GL_FLOAT, gl::GL_FALSE, sizeof(Vertices[0]), (void *)0);
+        
         gl::glUseProgram(_program);
         gl::glUniform1f(_timeLocation, time);
         gl::glUniformMatrix4fv(_mvpLocation, 1, gl::GL_FALSE, (const gl::GLfloat *)mvp);
         gl::glDrawArrays(gl::GL_TRIANGLES, 0, 6);
+        gl::glDisableVertexAttribArray(_vposLocation);
+
+        gl::glBindBuffer(gl::GL_ARRAY_BUFFER, 0);
     }
 
     PrintGLErrors();
