@@ -6,7 +6,7 @@ varying float time;
 uniform vec2 RESOLUTION;
 
 float random(vec2 st) {
-    return fract(sin(dot(st.xy, vec2(13.9898, 78.233))) * 43758.5453123);
+    return fract(sin(dot(st.xy, vec2(14.11, 78.1122))) * 43758.1234);
 }
 
 void main()
