@@ -13,7 +13,8 @@
 
 int main(int argc, char *argv[])
 {
-    Program *program = new Program();
+    auto context = std::shared_ptr<Context>(new Context());
+    Program *program = new Program(context);
 
     if (!glfwInit())
         exit(EXIT_FAILURE);
@@ -64,7 +65,10 @@ int main(int argc, char *argv[])
         gl::glViewport(0, 0, width, height);
         gl::glClear(gl::GL_COLOR_BUFFER_BIT);
 
-        program->Draw((float)glfwGetTime());
+        context->width = width;
+        context->height = height;
+
+        program->Draw();
 
         gl::GLint last_program;
         gl::glGetIntegerv(gl::GL_CURRENT_PROGRAM, &last_program);

@@ -7,23 +7,26 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include "Context.hpp"
 
 class Program {
 public:
-    Program();
+    Program(std::shared_ptr<Context>& context);
 
     ~Program();
 
     void Init();
 
-    void Draw(float time);
+    void Draw();
 
     void OnGUI();
 
 private:
+    std::shared_ptr<Context> _context;
+
     gl::GLuint _vertexBuffer, _vertexShader, _fragmentShader, _program = 0;
 
-    gl::GLint _mvpLocation, _vposLocation, _timeLocation;
+    gl::GLint _mvpLocation, _vposLocation, _timeLocation, _resolutionLocation;
 
     gl::GLuint CreateShader(gl::GLenum type, std::filesystem::path path);
 

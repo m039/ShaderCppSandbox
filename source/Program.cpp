@@ -64,8 +64,9 @@ void PrintGLErrors()
     }
 }
 
-Program::Program()
+Program::Program(std::shared_ptr<Context>& context)
 {
+    _context = context;
     _fileWatcher = std::unique_ptr<efsw::FileWatcher>(
         new efsw::FileWatcher());
     _watcher = new ShaderWatcher([=]()
@@ -176,6 +177,7 @@ void Program::CreateShaders(std::string &shaderName)
         _mvpLocation = gl::glGetUniformLocation(_program, "MVP");
         _vposLocation = gl::glGetAttribLocation(_program, "vPos");
         _timeLocation = gl::glGetUniformLocation(_program, "TIME");
+        _resolutionLocation = gl::glGetUniformLocation(_program, "RESOLUTION");
     }
     else
     {
@@ -222,7 +224,7 @@ gl::GLuint Program::CreateShader(gl::GLenum type, std::filesystem::path shaderPa
     }
 }
 
-void Program::Draw(float time)
+void Program::Draw()
 {
     while (!_commands.empty())
     {
@@ -245,8 +247,9 @@ void Program::Draw(float time)
         gl::glVertexAttribPointer(_vposLocation, 2, gl::GL_FLOAT, gl::GL_FALSE, sizeof(Vertices[0]), (void *)0);
         
         gl::glUseProgram(_program);
-        gl::glUniform1f(_timeLocation, time);
+        gl::glUniform1f(_timeLocation, _context->GetTime());
         gl::glUniformMatrix4fv(_mvpLocation, 1, gl::GL_FALSE, (const gl::GLfloat *)mvp);
+        gl::glUniform2f(_resolutionLocation, _context->width, _context->height);
         gl::glDrawArrays(gl::GL_TRIANGLES, 0, 6);
         gl::glDisableVertexAttribArray(_vposLocation);
 
