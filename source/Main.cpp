@@ -41,8 +41,6 @@ int main(int argc, char *argv[])
     ImGui::StyleColorsDark();
     // ImGui::StyleColorsLight();
 
-    bool show_demo_window = true;
-
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL2_Init();
 
@@ -59,8 +57,7 @@ int main(int argc, char *argv[])
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        program->OnGUI();
 
         ImGui::Render();
 

@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <thread>
+#include <imgui.h>
 
 #include "Program.hpp"
 #include "FileUtils.hpp"
@@ -37,9 +38,7 @@ private:
     std::function<void(void)> _callback;
 };
 
-static std::filesystem::path VertexShaderPath = "../shaders/SolidColor.vs";
-
-static std::filesystem::path FragmentShaderPath = "../shaders/SolidColor.fs";
+static std::filesystem::path ShadersDictory = "../shaders/";
 
 static const struct
 {
@@ -68,9 +67,9 @@ Program::Program()
         new efsw::FileWatcher());
     _watcher = new ShaderWatcher([=]()
                                  { _commands.push([=]()
-                                                  { CreateShaders(); }); });
+                                                  { CreateShaders(this->_selectedShader); }); });
 
-    _fileWatcher->addWatch(VertexShaderPath.parent_path().c_str(), _watcher, true);
+    _fileWatcher->addWatch(ShadersDictory.c_str(), _watcher, true);
     _fileWatcher->watch();
 }
 
@@ -81,15 +80,54 @@ Program::~Program()
 
 void Program::Init()
 {
-    // Vertex buffer.
-    // gl::glGenBuffers(1, &_vertexBuffer);
-    // gl::glBindBuffer(gl::GL_ARRAY_BUFFER, _vertexBuffer);
-    // gl::glBufferData(gl::GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, gl::GL_STATIC_DRAW);
-
-    CreateShaders();
+    FindShaders();
+    CreateShaders(_selectedShader);
 }
 
-void Program::CreateShaders()
+void Program::OnGUI()
+{
+    PopulateMainMenuBar();
+}
+
+void Program::FindShaders()
+{
+    for (const auto& entry: std::filesystem::directory_iterator(ShadersDictory)) {
+        const auto filename = entry.path().filename().string();
+        const auto trimmedName = filename.substr(0, filename.find("."));
+
+        if (std::find(_shadersFound.begin(), _shadersFound.end(), trimmedName) == _shadersFound.end()) {
+            _shadersFound.push_back(trimmedName);
+        }
+    }
+
+    if (_shadersFound.size() > 0) {
+        _selectedShader = _shadersFound[0];
+    } else {
+        _selectedShader = std::string("SolidColor");
+    }
+}
+
+void Program::PopulateMainMenuBar()
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("Shaders"))
+        {
+            for (const auto& shaderName: _shadersFound)
+            {
+                if (ImGui::MenuItem(shaderName.c_str()))
+                {
+                    _selectedShader = shaderName;
+                    CreateShaders(_selectedShader);
+                }
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+}
+
+void Program::CreateShaders(std::string &shaderName)
 {
     if (_program)
     {
@@ -98,10 +136,12 @@ void Program::CreateShaders()
     }
 
     // Vertex shader.
-    _vertexShader = CreateShader(gl::GL_VERTEX_SHADER, VertexShaderPath);
+    std::filesystem::path vertexShaderPath = ShadersDictory.c_str() + (shaderName + ".vs");
+    _vertexShader = CreateShader(gl::GL_VERTEX_SHADER, vertexShaderPath);
 
     // Fragment shader.
-    _fragmentShader = CreateShader(gl::GL_FRAGMENT_SHADER, FragmentShaderPath);
+    std::filesystem::path fragmentShaderPath = ShadersDictory.c_str() + (shaderName + ".fs");
+    _fragmentShader = CreateShader(gl::GL_FRAGMENT_SHADER, fragmentShaderPath);
 
     if (_fragmentShader && _vertexShader)
     {
@@ -187,6 +227,6 @@ void Program::Draw(float time)
         gl::glUniformMatrix4fv(_mvpLocation, 1, gl::GL_FALSE, (const gl::GLfloat *)mvp);
         gl::glDrawArrays(gl::GL_TRIANGLES, 0, 6);
     }
-    
+
     PrintGLErrors();
 }
