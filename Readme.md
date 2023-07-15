@@ -9,4 +9,3 @@ This application allows changing shaders and see the result immediate. It also c
 3. `./vcpkg.exe install glbinding`
 4. `./vcpkg.exe install efsw`
 5. `./vcpkg.exe install imgui[glfw-binding,opengl2-binding]`
-6. Install [cmake](https://cmake.org/).
