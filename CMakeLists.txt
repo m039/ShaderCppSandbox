@@ -21,6 +21,9 @@ target_link_libraries(NoiseSahderSandbox PRIVATE efsw::efsw)
 find_package(imgui CONFIG REQUIRED)
 target_link_libraries(NoiseSahderSandbox PRIVATE imgui::imgui)
 
+find_package(OpenGL REQUIRED)
+target_link_libraries(NoiseSahderSandbox PRIVATE ${OPENGL_LIBRARIES})
+
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)

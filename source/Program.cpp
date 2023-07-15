@@ -82,9 +82,9 @@ Program::~Program()
 void Program::Init()
 {
     // Vertex buffer.
-    gl::glGenBuffers(1, &_vertexBuffer);
-    gl::glBindBuffer(gl::GL_ARRAY_BUFFER, _vertexBuffer);
-    gl::glBufferData(gl::GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, gl::GL_STATIC_DRAW);
+    // gl::glGenBuffers(1, &_vertexBuffer);
+    // gl::glBindBuffer(gl::GL_ARRAY_BUFFER, _vertexBuffer);
+    // gl::glBufferData(gl::GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, gl::GL_STATIC_DRAW);
 
     CreateShaders();
 }
@@ -119,7 +119,7 @@ void Program::CreateShaders()
 
         gl::glEnableVertexAttribArray(_vposLocation);
         gl::glVertexAttribPointer(_vposLocation, 2, gl::GL_FLOAT, gl::GL_FALSE,
-                                  sizeof(Vertices[0]), (void *)0);
+                                  sizeof(Vertices[0]), (void *)Vertices);
     }
     else
     {
@@ -187,6 +187,6 @@ void Program::Draw(float time)
         gl::glUniformMatrix4fv(_mvpLocation, 1, gl::GL_FALSE, (const gl::GLfloat *)mvp);
         gl::glDrawArrays(gl::GL_TRIANGLES, 0, 6);
     }
-
+    
     PrintGLErrors();
 }
