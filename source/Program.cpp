@@ -5,6 +5,7 @@
 #include <functional>
 #include <thread>
 #include <imgui.h>
+#include <fstream>
 
 #include "Program.hpp"
 #include "FileUtils.hpp"
@@ -39,6 +40,8 @@ private:
 };
 
 static std::filesystem::path ShadersDictory = "../shaders/";
+
+static const char* SelectedShadeNameFile = "NoiseShaderSandbox.settings";
 
 static const struct
 {
@@ -100,11 +103,20 @@ void Program::FindShaders()
         }
     }
 
-    if (_shadersFound.size() > 0) {
-        _selectedShader = _shadersFound[0];
-    } else {
-        _selectedShader = std::string("SolidColor");
+    _selectedShader = LoadSelectedShaderName();
+    if (_selectedShader.length() <= 0) {
+        _selectedShader = "SolidColor";
     }
+}
+
+std::string Program::LoadSelectedShaderName() {
+    return ReadFileAsString(SelectedShadeNameFile);
+}
+
+void Program::SaveSelectedShaderName(const std::string& selectedShaderName) {
+    std::ofstream out(SelectedShadeNameFile);
+    out << selectedShaderName;
+    out.close();
 }
 
 void Program::PopulateMainMenuBar()
@@ -117,6 +129,7 @@ void Program::PopulateMainMenuBar()
             {
                 if (ImGui::MenuItem(shaderName.c_str()))
                 {
+                    SaveSelectedShaderName(shaderName);
                     _selectedShader = shaderName;
                     CreateShaders(_selectedShader);
                 }

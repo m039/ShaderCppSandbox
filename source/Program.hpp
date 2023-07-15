@@ -33,6 +33,10 @@ private:
 
     void PopulateMainMenuBar();
 
+    void SaveSelectedShaderName(const std::string& selectedShader);
+
+    std::string LoadSelectedShaderName();
+
     std::vector<std::string> _shadersFound;
 
     std::string _selectedShader;
