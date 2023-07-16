@@ -150,7 +150,7 @@ void Program::PopulateMainMenuBar()
     }
 }
 
-void Program::CreateShaders(std::string &shaderName)
+void Program::CreateShaders(const std::string &shaderName)
 {
     if (_program)
     {
@@ -187,7 +187,7 @@ void Program::CreateShaders(std::string &shaderName)
     }
 }
 
-gl::GLuint Program::CreateShader(gl::GLenum type, std::filesystem::path shaderPath)
+gl::GLuint Program::CreateShader(const gl::GLenum type, const std::filesystem::path &shaderPath)
 {
     auto shaderText = ReadFileAsString(shaderPath);
     if (shaderText.length() <= 0)

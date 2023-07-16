@@ -11,7 +11,7 @@
 
 class Program {
 public:
-    Program(std::shared_ptr<Context>& context);
+    Program(std::shared_ptr<Context> &context);
 
     ~Program();
 
@@ -28,15 +28,15 @@ private:
 
     gl::GLint _mvpLocation, _vposLocation, _timeLocation, _resolutionLocation;
 
-    gl::GLuint CreateShader(gl::GLenum type, std::filesystem::path path);
+    gl::GLuint CreateShader(const gl::GLenum type, const std::filesystem::path &path);
 
-    void CreateShaders(std::string& shaderName);
+    void CreateShaders(const std::string& shaderName);
 
     void FindShaders();
 
     void PopulateMainMenuBar();
 
-    void SaveSelectedShaderName(const std::string& selectedShader);
+    void SaveSelectedShaderName(const std::string &selectedShader);
 
     std::string LoadSelectedShaderName();
 
