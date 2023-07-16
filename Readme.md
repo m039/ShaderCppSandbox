@@ -1,6 +1,6 @@
 # About
 
-This application allows changing shaders and see the result immediate. It also contains various shader examples for OpenGL.
+This application allows changing shaders and see the result immediate. It also contains various shader examples for OpenGL, mostly noise shaders.
 
 # Installation
 
