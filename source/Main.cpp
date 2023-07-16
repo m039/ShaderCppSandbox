@@ -65,8 +65,8 @@ int main(int argc, char *argv[])
         gl::glViewport(0, 0, width, height);
         gl::glClear(gl::GL_COLOR_BUFFER_BIT);
 
-        context->width = width;
-        context->height = height;
+        context->width = static_cast<float>(width);
+        context->height = static_cast<float>(height);
 
         program->Draw();
 
