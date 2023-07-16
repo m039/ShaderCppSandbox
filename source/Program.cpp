@@ -108,6 +108,8 @@ void Program::FindShaders()
         }
     }
 
+    std::sort(_shadersFound.begin(), _shadersFound.end());
+
     _selectedShader = LoadSelectedShaderName();
     if (_selectedShader.length() <= 0)
     {
